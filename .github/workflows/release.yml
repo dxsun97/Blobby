@@ -1,0 +1,70 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Build DMG
+        run: |
+          chmod +x create-dmg.sh
+          bash create-dmg.sh "${{ steps.version.outputs.version }}"
+
+      - name: Compute DMG sha256
+        id: sha
+        run: |
+          DMG_FILE=$(ls Blobby-*.dmg)
+          SHA=$(shasum -a 256 "$DMG_FILE" | awk '{print $1}')
+          echo "sha256=$SHA" >> "$GITHUB_OUTPUT"
+          echo "dmg_file=$DMG_FILE" >> "$GITHUB_OUTPUT"
+
+      - name: Update Homebrew Cask
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          SHA="${{ steps.sha.outputs.sha256 }}"
+          sed -i '' "s/version \".*\"/version \"$VERSION\"/" Casks/blobby.rb
+          sed -i '' "s/sha256 \".*\"/sha256 \"$SHA\"/" Casks/blobby.rb
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Casks/blobby.rb
+          git commit -m "Update Cask to v$VERSION" || true
+          git push origin HEAD:main || true
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Blobby v${{ steps.version.outputs.version }}
+          body: |
+            ## Blobby v${{ steps.version.outputs.version }}
+
+            ### Install
+
+            **Homebrew:**
+            ```
+            brew install --cask --no-quarantine dxsun97/tap/blobby
+            ```
+
+            **Manual:**
+            1. Download the `.dmg` file below
+            2. Open the DMG and drag **Blobby** to **Applications**
+            3. Launch Blobby from Applications
+            4. Grant **Accessibility** permission when prompted (System Settings → Privacy & Security → Accessibility)
+
+            > On first launch, macOS may show "unidentified developer" warning. Right-click the app → **Open** → **Open** to bypass.
+          files: |
+            Blobby-*.dmg
+          draft: false
+          prerelease: false
