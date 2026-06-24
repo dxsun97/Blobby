@@ -4,6 +4,8 @@
 <dict>
     <key>LSUIElement</key>
     <true/>
+    <key>NSQuitAlwaysKeepsWindows</key>
+    <false/>
     <key>NSAccessibilityUsageDescription</key>
     <string>Blobby needs Accessibility access to track your cursor position system-wide.</string>
     <key>CFBundleName</key>

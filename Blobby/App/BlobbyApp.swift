@@ -14,7 +14,7 @@ struct BlobbyApp: App {
 }
 
 struct MenuBarMenu: View {
-    let appDelegate: AppDelegate
+    @ObservedObject var appDelegate: AppDelegate
 
     var body: some View {
         Button {
@@ -44,6 +44,7 @@ struct MenuBarMenu: View {
         } label: {
             Text("menu.checkUpdates".localized)
         }
+        .disabled(appDelegate.isCheckingForUpdates)
 
         Button {
             appDelegate.showAccessibilityRepairHelp()

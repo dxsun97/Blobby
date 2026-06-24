@@ -7,6 +7,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     private let cursorTracker = CursorTracker()
     private let springRef = SpringRef()
     let settings = BlobbySettings()
+    @Published private(set) var isCheckingForUpdates = false
     private var settingsWindow: NSPanel?
 
     var menuBarIcon: NSImage {
@@ -38,9 +39,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     // MARK: - Check for Updates
 
     func checkForUpdates(silent: Bool = false) {
+        guard !isCheckingForUpdates else { return }
+        isCheckingForUpdates = true
+
         Task {
             let result = await UpdateChecker.check()
             await MainActor.run {
+                isCheckingForUpdates = false
+
                 switch result {
                 case .available(let version, _, let dmgURL):
                     let alert = NSAlert()
@@ -216,6 +222,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
             window.backgroundColor = .windowBackgroundColor
             window.animationBehavior = .default
             window.collectionBehavior = [.moveToActiveSpace, .fullScreenAuxiliary]
+            window.isRestorable = false
             window.center()
 
             settingsWindow = window
@@ -225,6 +232,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     }
 
     private func closeSettingsPopup() {
+        settingsWindow?.orderOut(nil)
         settingsWindow?.close()
         settingsWindow = nil
     }
