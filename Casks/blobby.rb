@@ -1,6 +1,6 @@
 cask "blobby" do
   version "1.0.2-beta.1"
-  sha256 "99df1433430df3692c444cf1a88051bbace23fcf1ee4b87acf7532f3f36db490"
+  sha256 "55f7cdc9b3003a05608d1cdee4a17ba6d32f954e296f640562c4cda5439af8ad"
 
   url "https://github.com/dxsun97/Blobby/releases/download/v#{version}/Blobby-#{version}-universal.dmg"
   name "Blobby"
