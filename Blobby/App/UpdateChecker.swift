@@ -244,8 +244,8 @@ struct UpdateChecker {
     }
 
     private static func isNewer(_ latest: String, than current: String) -> Bool {
-        let latestParts = latest.split(separator: ".").compactMap { Int($0) }
-        let currentParts = current.split(separator: ".").compactMap { Int($0) }
+        let latestParts = versionCoreParts(latest)
+        let currentParts = versionCoreParts(current)
 
         for i in 0..<max(latestParts.count, currentParts.count) {
             let l = i < latestParts.count ? latestParts[i] : 0
@@ -254,6 +254,16 @@ struct UpdateChecker {
             if l < c { return false }
         }
         return false
+    }
+
+    private static func versionCoreParts(_ version: String) -> [Int] {
+        version
+            .split(separator: ".")
+            .prefix(3)
+            .map { part in
+                let digits = part.prefix { $0.isNumber }
+                return Int(digits) ?? 0
+            }
     }
 
     private static func detach(_ mountPoint: String) {
