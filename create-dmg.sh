@@ -25,6 +25,21 @@ cp "Blobby/Info.plist" "$CONTENTS_DIR/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$CONTENTS_DIR/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $VERSION" "$CONTENTS_DIR/Info.plist"
 
+# Copy SwiftPM resource bundle and top-level localized strings
+RESOURCE_BUNDLE=$(find .build -path "*/Release/${APP_NAME}_${APP_NAME}.bundle" -type d -print -quit)
+if [ -n "$RESOURCE_BUNDLE" ]; then
+    cp -R "$RESOURCE_BUNDLE" "$RESOURCES_DIR/"
+fi
+
+for dir in Blobby/Resources/*.lproj; do
+    [ -d "$dir" ] && cp -R "$dir" "$RESOURCES_DIR/"
+done
+
+if ! find "$RESOURCES_DIR" \( -path "*/zh-Hans.lproj/Localizable.strings" -o -path "*/zh-hans.lproj/Localizable.strings" \) | grep -q .; then
+    echo "Error: Chinese localization was not copied into the app bundle" >&2
+    exit 1
+fi
+
 ICON_PNG="Blobby/Resources/Assets.xcassets/AppIcon.appiconset/icon_1024.png"
 if [ -f "$ICON_PNG" ]; then
     ICONSET_DIR=$(mktemp -d)/AppIcon.iconset
