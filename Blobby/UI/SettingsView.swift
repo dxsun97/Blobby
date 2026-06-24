@@ -1,6 +1,14 @@
+import AppKit
 import SwiftUI
 
 // MARK: - Grouped card section (mimics System Settings style)
+
+private enum SettingsLayout {
+    static let labelWidth: CGFloat = 96
+    static let controlWidth: CGFloat = 156
+    static let rowHeight: CGFloat = 34
+    static let segmentedControlHeight: CGFloat = 24
+}
 
 struct CardSection<Content: View>: View {
     @ViewBuilder let content: () -> Content
@@ -27,18 +35,100 @@ struct CardRow<Control: View>: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack {
+            HStack(alignment: .center, spacing: 12) {
                 Text(label.localized)
                     .font(.body)
-                Spacer(minLength: 12)
+                    .lineLimit(1)
+                    .frame(width: SettingsLayout.labelWidth, alignment: .leading)
                 control()
+                    .frame(width: SettingsLayout.controlWidth, alignment: .trailing)
             }
             .padding(.horizontal, 12)
-            .padding(.vertical, 8)
+            .frame(height: SettingsLayout.rowHeight)
 
             if showDivider {
                 Divider().padding(.leading, 12)
             }
+        }
+    }
+}
+
+struct SliderValueControl<Value: BinaryFloatingPoint>: View where Value.Stride: BinaryFloatingPoint {
+    @Binding var value: Value
+    let range: ClosedRange<Value>
+    let step: Value.Stride
+    let format: (Value) -> String
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 6) {
+            Slider(value: $value, in: range, step: step)
+                .frame(width: 110)
+            Text(format(value))
+                .font(.body)
+                .monospacedDigit()
+                .foregroundStyle(.secondary)
+                .frame(width: 40, alignment: .trailing)
+        }
+        .frame(width: SettingsLayout.controlWidth, alignment: .trailing)
+    }
+}
+
+struct SpringModeControl: View {
+    @Binding var mode: SpringMode
+
+    var body: some View {
+        NativeSpringModeSegmentedControl(mode: $mode)
+        .frame(width: SettingsLayout.controlWidth, height: SettingsLayout.segmentedControlHeight)
+    }
+}
+
+struct NativeSpringModeSegmentedControl: NSViewRepresentable {
+    @Binding var mode: SpringMode
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(mode: $mode)
+    }
+
+    func makeNSView(context: Context) -> NSSegmentedControl {
+        let control = NSSegmentedControl(
+            labels: SpringMode.allCases.map(\.displayName),
+            trackingMode: .selectOne,
+            target: context.coordinator,
+            action: #selector(Coordinator.selectMode(_:))
+        )
+        control.segmentStyle = .rounded
+        control.controlSize = .small
+        control.setContentHuggingPriority(.required, for: .horizontal)
+        control.setContentHuggingPriority(.required, for: .vertical)
+        return control
+    }
+
+    func updateNSView(_ control: NSSegmentedControl, context: Context) {
+        context.coordinator.mode = $mode
+
+        let modes = SpringMode.allCases
+        if control.segmentCount != modes.count {
+            control.segmentCount = modes.count
+        }
+
+        for (index, springMode) in modes.enumerated() {
+            control.setLabel(springMode.displayName, forSegment: index)
+            control.setWidth(SettingsLayout.controlWidth / CGFloat(modes.count), forSegment: index)
+        }
+
+        control.selectedSegment = modes.firstIndex(of: mode) ?? 0
+    }
+
+    final class Coordinator: NSObject {
+        var mode: Binding<SpringMode>
+
+        init(mode: Binding<SpringMode>) {
+            self.mode = mode
+        }
+
+        @objc func selectMode(_ sender: NSSegmentedControl) {
+            guard sender.selectedSegment >= 0 else { return }
+            mode.wrappedValue = SpringMode.allCases[sender.selectedSegment]
         }
     }
 }
@@ -118,22 +208,14 @@ struct SettingsView: View {
                     .onChange(of: settings.blobColor) { _, _ in configureColorPanel() }
             }
             CardRow("settings.size") {
-                Slider(value: $settings.blobSize, in: 20...100, step: 2)
-                    .frame(width: 110)
-                Text("\(Int(settings.blobSize))")
-                    .font(.body)
-                    .monospacedDigit()
-                    .foregroundStyle(.secondary)
-                    .frame(width: 40, alignment: .trailing)
+                SliderValueControl(value: $settings.blobSize, range: 20...100, step: 2) {
+                    "\(Int($0))"
+                }
             }
             CardRow("settings.opacity", showDivider: false) {
-                Slider(value: $settings.opacity, in: 0.2...1.0, step: 0.05)
-                    .frame(width: 110)
-                Text("\(Int(settings.opacity * 100))%")
-                    .font(.body)
-                    .monospacedDigit()
-                    .foregroundStyle(.secondary)
-                    .frame(width: 40, alignment: .trailing)
+                SliderValueControl(value: $settings.opacity, range: 0.2...1.0, step: 0.05) {
+                    "\(Int($0 * 100))%"
+                }
             }
         }
     }
@@ -143,14 +225,7 @@ struct SettingsView: View {
     private var behaviorCard: some View {
         CardSection {
             CardRow("settings.spring") {
-                Picker("", selection: $settings.springMode) {
-                    ForEach(SpringMode.allCases) { mode in
-                        Text(mode.displayName).tag(mode)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .frame(width: 156)
+                SpringModeControl(mode: $settings.springMode)
             }
             CardRow("settings.dotCursor", showDivider: settings.showDotCursor) {
                 Toggle("", isOn: $settings.showDotCursor)
@@ -165,13 +240,9 @@ struct SettingsView: View {
                         .onChange(of: settings.dotColor) { _, _ in configureColorPanel() }
                 }
                 CardRow("settings.dotSize", showDivider: false) {
-                    Slider(value: $settings.dotSize, in: 2...16, step: 1)
-                        .frame(width: 110)
-                    Text("\(Int(settings.dotSize))")
-                        .font(.body)
-                        .monospacedDigit()
-                        .foregroundStyle(.secondary)
-                        .frame(width: 40, alignment: .trailing)
+                    SliderValueControl(value: $settings.dotSize, range: 2...16, step: 1) {
+                        "\(Int($0))"
+                    }
                 }
             }
         }

@@ -265,6 +265,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         }
     }
 
+    func showAccessibilityRepairHelp() {
+        let alert = NSAlert()
+        alert.messageText = L10n.text("accessibility.repair.title")
+        alert.informativeText = L10n.text("accessibility.repair.message")
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: L10n.text("accessibility.openSettings"))
+        alert.addButton(withTitle: L10n.text("common.cancel"))
+
+        if alert.runModal() == .alertFirstButtonReturn {
+            openAccessibilitySettings()
+        }
+    }
+
+    private func openAccessibilitySettings() {
+        let settingsURL = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!
+        if !NSWorkspace.shared.open(settingsURL),
+           let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.systempreferences") {
+            NSWorkspace.shared.open(appURL)
+        }
+    }
+
     private func waitForAccessibility() {
         let t = Timer(timeInterval: 1.0, repeats: true) { [weak self] timer in
             if AXIsProcessTrusted() {

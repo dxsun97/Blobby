@@ -130,9 +130,12 @@ git push origin v1.0.0
 
 GitHub Actions 会构建 DMG、更新 cask，并发布 release。
 
+GitHub Actions 会发布 ad-hoc 签名版本。辅助功能权限会绑定到应用的代码身份，因此用户重新安装后可能需要重置辅助功能权限。
+
 ## 备注
 
 - 需要辅助功能权限。
+- 如果重新安装未签名/ad-hoc 签名版本后，系统设置里显示 Blobby 已启用辅助功能，但应用仍无法跟踪光标，请先从辅助功能列表中移除 Blobby，退出 Blobby，再重新添加新安装的应用并重启。
 - 安全输入可能限制光标事件可见性。
 - 应用没有启用沙盒，因此当前形态不适合直接上架 Mac App Store。
 - Space 或全屏切换由 macOS 控制，覆层时序偶尔会受影响。

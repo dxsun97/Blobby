@@ -45,6 +45,12 @@ struct MenuBarMenu: View {
             Text("menu.checkUpdates".localized)
         }
 
+        Button {
+            appDelegate.showAccessibilityRepairHelp()
+        } label: {
+            Text("menu.fixAccessibility".localized)
+        }
+
         Divider()
 
         Button {

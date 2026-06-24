@@ -130,9 +130,12 @@ git push origin v1.0.0
 
 GitHub Actions builds the DMG, updates the cask, and publishes the release.
 
+GitHub Actions publishes an ad-hoc signed release. Accessibility permission is tied to the app's code identity, so users may need to reset Accessibility permission after reinstalling.
+
 ## Notes
 
 - Accessibility permission is required.
+- If Accessibility shows Blobby as enabled but the app cannot track the cursor after reinstalling an unsigned/ad-hoc build, remove Blobby from Accessibility, quit Blobby, add the newly installed app again, then relaunch.
 - Secure input can limit cursor event visibility.
 - The app is not sandboxed, so it is not suitable for the Mac App Store as-is.
 - Space/fullscreen transitions are controlled by macOS and can occasionally affect overlay timing.

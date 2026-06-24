@@ -2,6 +2,7 @@
 "menu.enable" = "Enable Blobby";
 "menu.settings" = "Settings...";
 "menu.checkUpdates" = "Check for Updates...";
+"menu.fixAccessibility" = "Fix Accessibility...";
 "menu.quit" = "Quit Blobby";
 
 "settings.color" = "Color";
@@ -30,5 +31,9 @@
 "updates.installed.message" = "Blobby v%@ has been installed. The app will restart now.";
 "updates.restart" = "Restart";
 "updates.failed.title" = "Update Failed";
+
+"accessibility.repair.title" = "Fix Accessibility Permission";
+"accessibility.repair.message" = "If Blobby is enabled in Accessibility but still cannot follow the cursor, macOS may be keeping a stale permission for an older copy.\n\n1. Quit Blobby.\n2. In Accessibility, remove Blobby from the list.\n3. Add the newly installed Blobby.app again.\n4. Relaunch Blobby.";
+"accessibility.openSettings" = "Open Accessibility";
 
 "common.cancel" = "Cancel";

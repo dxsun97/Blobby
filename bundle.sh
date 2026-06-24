@@ -63,7 +63,12 @@ fi
 /usr/libexec/PlistBuddy -c "Set :CFBundleIconFile AppIcon" "$CONTENTS_DIR/Info.plist"
 
 # Sign the bundle
-codesign --force --sign "$CODE_SIGN_IDENTITY" --identifier "$BUNDLE_ID" --deep "$BUNDLE_DIR" > /dev/null 2>&1
+codesign --force \
+    --sign "$CODE_SIGN_IDENTITY" \
+    --identifier "$BUNDLE_ID" \
+    --entitlements Blobby/Blobby.entitlements \
+    --deep \
+    "$BUNDLE_DIR" > /dev/null 2>&1
 
 echo "✓ Built $BUNDLE_DIR"
 echo "  Run with: open $BUNDLE_DIR"

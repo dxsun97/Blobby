@@ -1,34 +1,39 @@
-"menu.disable" = "关闭 Blobby";
-"menu.enable" = "开启 Blobby";
+"menu.disable" = "停用 Blobby";
+"menu.enable" = "启用 Blobby";
 "menu.settings" = "设置...";
 "menu.checkUpdates" = "检查更新...";
+"menu.fixAccessibility" = "修复辅助功能权限...";
 "menu.quit" = "退出 Blobby";
 
 "settings.color" = "颜色";
 "settings.size" = "大小";
 "settings.opacity" = "透明度";
-"settings.spring" = "弹簧";
-"settings.dotCursor" = "圆点光标";
+"settings.spring" = "跟随速度";
+"settings.dotCursor" = "光标圆点";
 "settings.dotColor" = "圆点颜色";
-"settings.dotSize" = "圆点大小";
+"settings.dotSize" = "圆点尺寸";
 
-"spring.normal" = "普通";
+"spring.normal" = "正常";
 "spring.slow" = "慢速";
-"spring.bouncy" = "弹性";
+"spring.bouncy" = "弹跳";
 
-"updates.available.title" = "有可用更新";
-"updates.available.message" = "Blobby v%@ 已可用。当前版本是 v%@。\n\n现在安装吗？应用会自动重启。";
+"updates.available.title" = "发现新版本";
+"updates.available.message" = "Blobby v%@ 已发布。当前版本为 v%@。\n\n要现在安装吗？应用会自动重启。";
 "updates.install" = "安装更新";
 "updates.later" = "稍后";
-"updates.upToDate.title" = "已是最新版本";
-"updates.upToDate.message" = "Blobby v%@ 已是最新版本。";
+"updates.upToDate.title" = "已是最新版";
+"updates.upToDate.message" = "Blobby v%@ 已经是最新版。";
 "updates.checkFailed.title" = "检查更新失败";
-"updates.downloading.title" = "正在下载更新...";
+"updates.downloading.title" = "正在下载更新…";
 "updates.downloading.message" = "正在下载 Blobby v%@...";
-"updates.downloading.progress" = "正在下载... %d%%";
-"updates.installed.title" = "更新已安装";
-"updates.installed.message" = "Blobby v%@ 已安装。应用现在会重启。";
+"updates.downloading.progress" = "正在下载… %d%%";
+"updates.installed.title" = "更新完成";
+"updates.installed.message" = "Blobby v%@ 已安装。应用即将重启。";
 "updates.restart" = "重启";
 "updates.failed.title" = "更新失败";
+
+"accessibility.repair.title" = "修复辅助功能授权";
+"accessibility.repair.message" = "如果系统设置中显示 Blobby 已获得辅助功能权限，但它仍无法跟随光标，macOS 可能还保留着旧版本的失效授权。\n\n1. 退出 Blobby。\n2. 在辅助功能列表中移除 Blobby。\n3. 重新添加新安装的 Blobby.app。\n4. 再次启动 Blobby。";
+"accessibility.openSettings" = "打开辅助功能设置";
 
 "common.cancel" = "取消";

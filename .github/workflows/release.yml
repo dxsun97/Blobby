@@ -64,6 +64,7 @@ jobs:
             4. Grant **Accessibility** permission when prompted (System Settings → Privacy & Security → Accessibility)
 
             > On first launch, macOS may show "unidentified developer" warning. Right-click the app → **Open** → **Open** to bypass.
+            > If Blobby appears enabled in Accessibility but does not work after reinstalling, remove Blobby from Accessibility, quit Blobby, add the newly installed app again, then relaunch. This can happen with unsigned/ad-hoc builds.
           files: |
             Blobby-*.dmg
           draft: false

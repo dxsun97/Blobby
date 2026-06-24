@@ -62,9 +62,13 @@ if [ -f "$ICON_PNG" ]; then
     echo "  ✓ App icon"
 fi
 
-# Sign the bundle
-codesign --force --sign - --identifier com.blobby.app --deep "$BUNDLE_DIR" > /dev/null 2>&1
-echo "  ✓ Code signed"
+codesign --force \
+    --sign - \
+    --identifier com.blobby.app \
+    --entitlements Blobby/Blobby.entitlements \
+    --deep \
+    "$BUNDLE_DIR" > /dev/null 2>&1
+echo "  ✓ Code signed ad-hoc"
 
 echo "  ✓ App bundle at $BUNDLE_DIR"
 
