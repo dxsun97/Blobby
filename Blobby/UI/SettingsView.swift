@@ -15,11 +15,11 @@ struct CardSection<Content: View>: View {
 }
 
 struct CardRow<Control: View>: View {
-    let label: LocalizedStringKey
+    let label: String
     let showDivider: Bool
     @ViewBuilder let control: () -> Control
 
-    init(_ label: LocalizedStringKey, showDivider: Bool = true, @ViewBuilder control: @escaping () -> Control) {
+    init(_ label: String, showDivider: Bool = true, @ViewBuilder control: @escaping () -> Control) {
         self.label = label
         self.showDivider = showDivider
         self.control = control
@@ -28,7 +28,7 @@ struct CardRow<Control: View>: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack {
-                Text(label)
+                Text(label.localized)
                     .font(.body)
                 Spacer(minLength: 12)
                 control()

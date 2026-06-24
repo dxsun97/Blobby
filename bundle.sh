@@ -20,6 +20,12 @@ mkdir -p "$MACOS_DIR" "$RESOURCES_DIR"
 # Copy executable
 cp ".build/debug/$APP_NAME" "$MACOS_DIR/$APP_NAME"
 
+# Copy SwiftPM resource bundle
+RESOURCE_BUNDLE=".build/debug/${APP_NAME}_${APP_NAME}.bundle"
+if [ -d "$RESOURCE_BUNDLE" ]; then
+    cp -R "$RESOURCE_BUNDLE" "$RESOURCES_DIR/"
+fi
+
 # Copy Info.plist
 cp "Blobby/Info.plist" "$CONTENTS_DIR/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleName $DISPLAY_NAME" "$CONTENTS_DIR/Info.plist"

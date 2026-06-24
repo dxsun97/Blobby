@@ -17,7 +17,7 @@ struct MenuBarMenu: View {
     let appDelegate: AppDelegate
 
     var body: some View {
-        Button(toggleTitle) {
+        Button {
             if appDelegate.settings.isEnabled {
                 appDelegate.settings.isEnabled = false
                 appDelegate.deactivate()
@@ -25,29 +25,37 @@ struct MenuBarMenu: View {
                 appDelegate.settings.isEnabled = true
                 appDelegate.activate()
             }
+        } label: {
+            Text(toggleTitle)
         }
         .keyboardShortcut("b", modifiers: [.command, .shift])
 
         Divider()
 
-        Button("menu.settings") {
+        Button {
             appDelegate.showSettingsPopup()
+        } label: {
+            Text("menu.settings".localized)
         }
         .keyboardShortcut(",", modifiers: .command)
 
-        Button("menu.checkUpdates") {
+        Button {
             appDelegate.checkForUpdates()
+        } label: {
+            Text("menu.checkUpdates".localized)
         }
 
         Divider()
 
-        Button("menu.quit") {
+        Button {
             NSApplication.shared.terminate(nil)
+        } label: {
+            Text("menu.quit".localized)
         }
         .keyboardShortcut("q", modifiers: .command)
     }
 
-    private var toggleTitle: LocalizedStringKey {
-        appDelegate.settings.isEnabled ? "menu.disable" : "menu.enable"
+    private var toggleTitle: String {
+        appDelegate.settings.isEnabled ? "menu.disable".localized : "menu.enable".localized
     }
 }

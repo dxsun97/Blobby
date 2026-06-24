@@ -3,6 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "Blobby",
+    defaultLocalization: "en",
     platforms: [.macOS(.v14)],
     targets: [
         .executableTarget(
@@ -10,7 +11,7 @@ let package = Package(
             path: "Blobby",
             exclude: ["Info.plist", "Blobby.entitlements"],
             resources: [
-                .copy("Resources"),
+                .process("Resources"),
             ]
         ),
     ]
