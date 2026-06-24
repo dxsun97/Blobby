@@ -9,12 +9,46 @@ enum L10n {
 
     private static func localizedFormat(for key: String) -> String {
         for bundle in localizationBundles {
-            let value = bundle.localizedString(forKey: key, value: nil, table: nil)
-            if value != key {
-                return value
+            for localizedBundle in preferredBundles(for: bundle) {
+                let value = localizedBundle.localizedString(forKey: key, value: nil, table: nil)
+                if value != key {
+                    return value
+                }
             }
         }
         return key
+    }
+
+    private static func preferredBundles(for bundle: Bundle) -> [Bundle] {
+        let preferredLocalizations = Bundle.preferredLocalizations(
+            from: bundle.localizations,
+            forPreferences: Locale.preferredLanguages
+        )
+        let localizedBundles = preferredLocalizations.compactMap { localization in
+            lprojBundle(for: localization, in: bundle)
+        }
+
+        return localizedBundles + [bundle]
+    }
+
+    private static func lprojBundle(for localization: String, in bundle: Bundle) -> Bundle? {
+        if let path = bundle.path(forResource: localization, ofType: "lproj") {
+            return Bundle(path: path)
+        }
+
+        guard let resourceURL = bundle.resourceURL,
+              let lprojURL = try? FileManager.default.contentsOfDirectory(
+                at: resourceURL,
+                includingPropertiesForKeys: nil
+              ).first(where: {
+                $0.pathExtension == "lproj"
+                    && $0.deletingPathExtension().lastPathComponent.caseInsensitiveCompare(localization) == .orderedSame
+              })
+        else {
+            return nil
+        }
+
+        return Bundle(url: lprojURL)
     }
 
     private static let localizationBundles: [Bundle] = {
