@@ -74,29 +74,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     }
 
     private func performUpdate(dmgURL: URL, version: String) {
-        let alert = NSAlert()
-        alert.messageText = L10n.text("updates.downloading.title")
-        alert.informativeText = L10n.text("updates.downloading.message", version)
-        alert.alertStyle = .informational
-        alert.addButton(withTitle: L10n.text("common.cancel"))
-        let indicator = NSProgressIndicator()
-        indicator.style = .bar
-        indicator.isIndeterminate = false
-        indicator.minValue = 0
-        indicator.maxValue = 1
-        indicator.frame = NSRect(x: 0, y: 0, width: 250, height: 20)
-        alert.accessoryView = indicator
+        let progressWindow = makeUpdateProgressWindow(version: version)
+        let indicator = progressWindow.indicator
+        let progressLabel = progressWindow.progressLabel
+        let window = progressWindow.window
 
-        let window = alert.window
-        DispatchQueue.main.async {
-            window.makeKeyAndOrderFront(nil)
-        }
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
 
         Task {
             let result = await UpdateChecker.downloadAndInstall(dmgURL: dmgURL) { progress in
                 DispatchQueue.main.async {
                     indicator.doubleValue = progress
-                    alert.informativeText = L10n.text("updates.downloading.progress", Int(progress * 100))
+                    progressLabel.stringValue = L10n.text("updates.downloading.progress", Int(progress * 100))
                 }
             }
 
@@ -124,6 +114,68 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
                 }
             }
         }
+    }
+
+    private func makeUpdateProgressWindow(version: String) -> (window: NSPanel, indicator: NSProgressIndicator, progressLabel: NSTextField) {
+        let indicator = NSProgressIndicator()
+        indicator.style = .bar
+        indicator.isIndeterminate = false
+        indicator.minValue = 0
+        indicator.maxValue = 1
+        indicator.translatesAutoresizingMaskIntoConstraints = false
+
+        let titleLabel = NSTextField(labelWithString: L10n.text("updates.downloading.title"))
+        titleLabel.font = .boldSystemFont(ofSize: NSFont.systemFontSize)
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        let messageLabel = NSTextField(labelWithString: L10n.text("updates.downloading.message", version))
+        messageLabel.textColor = .secondaryLabelColor
+        messageLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        let progressLabel = NSTextField(labelWithString: L10n.text("updates.downloading.progress", 0))
+        progressLabel.textColor = .secondaryLabelColor
+        progressLabel.alignment = .right
+        progressLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        let contentView = NSView()
+        contentView.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(titleLabel)
+        contentView.addSubview(messageLabel)
+        contentView.addSubview(progressLabel)
+        contentView.addSubview(indicator)
+
+        NSLayoutConstraint.activate([
+            titleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            titleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            titleLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 18),
+
+            messageLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
+            messageLabel.trailingAnchor.constraint(equalTo: titleLabel.trailingAnchor),
+            messageLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 6),
+
+            indicator.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
+            indicator.trailingAnchor.constraint(equalTo: titleLabel.trailingAnchor),
+            indicator.topAnchor.constraint(equalTo: messageLabel.bottomAnchor, constant: 16),
+
+            progressLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
+            progressLabel.trailingAnchor.constraint(equalTo: titleLabel.trailingAnchor),
+            progressLabel.topAnchor.constraint(equalTo: indicator.bottomAnchor, constant: 8),
+            progressLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -18),
+        ])
+
+        let window = NSPanel(
+            contentRect: NSRect(x: 0, y: 0, width: 340, height: 132),
+            styleMask: [.titled],
+            backing: .buffered,
+            defer: false
+        )
+        window.title = L10n.text("updates.downloading.title")
+        window.contentView = contentView
+        window.isReleasedWhenClosed = false
+        window.level = .floating
+        window.center()
+
+        return (window, indicator, progressLabel)
     }
 
     private func autoCheckForUpdates() {
