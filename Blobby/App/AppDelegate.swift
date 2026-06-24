@@ -277,6 +277,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 
     private func onAccessibilityGranted() {
         cursorTracker.start()
+        springRef.reset(to: cursorTracker.mousePosition)
         setupOverlays()
         if settings.isEnabled {
             activate()

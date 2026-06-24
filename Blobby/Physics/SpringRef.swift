@@ -1,13 +1,16 @@
 import AppKit
 
 final class SpringRef {
-    private(set) var position: CGPoint
+    private(set) var position: CGPoint = .zero
     private(set) var velocity: CGPoint = .zero
     private(set) var isIdle: Bool = true
     private var lastStepTime: TimeInterval = 0
 
-    init() {
-        self.position = NSEvent.mouseLocation
+    func reset(to position: CGPoint) {
+        self.position = position
+        velocity = .zero
+        isIdle = true
+        lastStepTime = CACurrentMediaTime()
     }
 
     func step(constants: SpringMode.Constants, target: CGPoint) {

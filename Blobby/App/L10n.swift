@@ -19,12 +19,26 @@ enum L10n {
 
     private static let localizationBundles: [Bundle] = {
         var bundles: [Bundle] = []
-        for bundle in [Bundle.main, Bundle.module] {
+        for bundle in [Bundle.main] + resourceBundles {
             if !bundles.contains(where: { $0.bundleURL == bundle.bundleURL }) {
                 bundles.append(bundle)
             }
         }
         return bundles
+    }()
+
+    private static let resourceBundles: [Bundle] = {
+        let bundleName = "Blobby_Blobby.bundle"
+        let executableDirectory = URL(fileURLWithPath: CommandLine.arguments[0])
+            .resolvingSymlinksInPath()
+            .deletingLastPathComponent()
+        let candidates = [
+            Bundle.main.resourceURL?.appendingPathComponent(bundleName),
+            Bundle.main.bundleURL.appendingPathComponent(bundleName),
+            executableDirectory.appendingPathComponent(bundleName),
+        ].compactMap { $0 }
+
+        return candidates.compactMap { Bundle(url: $0) }
     }()
 }
 
