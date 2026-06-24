@@ -224,6 +224,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         }
     }
 
+    private func closeSettingsPopup() {
+        settingsWindow?.close()
+        settingsWindow = nil
+    }
+
     // MARK: - Menu Bar Icon
 
     private func renderMenuBarIcon(isEnabled: Bool) -> NSImage {
@@ -318,6 +323,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     }
 
     func showAccessibilityRepairHelp() {
+        closeSettingsPopup()
+
         let alert = NSAlert()
         alert.messageText = L10n.text("accessibility.repair.title")
         alert.informativeText = L10n.text("accessibility.repair.message")
