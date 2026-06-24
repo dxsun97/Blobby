@@ -76,7 +76,7 @@ final class BlobOverlayView: NSView {
             view.hasPendingDisplayLinkTick = true
             view.displayLinkLock.unlock()
 
-            DispatchQueue.main.async {
+            RunLoop.main.perform(inModes: [.default, .common, .eventTracking, .modalPanel]) {
                 view.tick()
                 view.displayLinkLock.lock()
                 view.hasPendingDisplayLinkTick = false
