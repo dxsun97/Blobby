@@ -17,7 +17,7 @@ struct MenuBarMenu: View {
     let appDelegate: AppDelegate
 
     var body: some View {
-        Button(appDelegate.settings.isEnabled ? "Disable Blobby" : "Enable Blobby") {
+        Button(toggleTitle) {
             if appDelegate.settings.isEnabled {
                 appDelegate.settings.isEnabled = false
                 appDelegate.deactivate()
@@ -30,20 +30,24 @@ struct MenuBarMenu: View {
 
         Divider()
 
-        Button("Settings...") {
+        Button("menu.settings") {
             appDelegate.showSettingsPopup()
         }
         .keyboardShortcut(",", modifiers: .command)
 
-        Button("Check for Updates...") {
+        Button("menu.checkUpdates") {
             appDelegate.checkForUpdates()
         }
 
         Divider()
 
-        Button("Quit Blobby") {
+        Button("menu.quit") {
             NSApplication.shared.terminate(nil)
         }
         .keyboardShortcut("q", modifiers: .command)
+    }
+
+    private var toggleTitle: LocalizedStringKey {
+        appDelegate.settings.isEnabled ? "menu.disable" : "menu.enable"
     }
 }

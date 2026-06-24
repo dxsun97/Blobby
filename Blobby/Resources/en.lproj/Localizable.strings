@@ -1,0 +1,34 @@
+"menu.disable" = "Disable Blobby";
+"menu.enable" = "Enable Blobby";
+"menu.settings" = "Settings...";
+"menu.checkUpdates" = "Check for Updates...";
+"menu.quit" = "Quit Blobby";
+
+"settings.color" = "Color";
+"settings.size" = "Size";
+"settings.opacity" = "Opacity";
+"settings.spring" = "Spring";
+"settings.dotCursor" = "Dot cursor";
+"settings.dotColor" = "Dot color";
+"settings.dotSize" = "Dot size";
+
+"spring.normal" = "Normal";
+"spring.slow" = "Slow";
+"spring.bouncy" = "Bouncy";
+
+"updates.available.title" = "Update Available";
+"updates.available.message" = "Blobby v%@ is available. You're currently on v%@.\n\nInstall now? The app will restart automatically.";
+"updates.install" = "Install Update";
+"updates.later" = "Later";
+"updates.upToDate.title" = "You're Up to Date";
+"updates.upToDate.message" = "Blobby v%@ is the latest version.";
+"updates.checkFailed.title" = "Update Check Failed";
+"updates.downloading.title" = "Downloading Update...";
+"updates.downloading.message" = "Downloading Blobby v%@...";
+"updates.downloading.progress" = "Downloading... %d%%";
+"updates.installed.title" = "Update Installed";
+"updates.installed.message" = "Blobby v%@ has been installed. The app will restart now.";
+"updates.restart" = "Restart";
+"updates.failed.title" = "Update Failed";
+
+"common.cancel" = "Cancel";

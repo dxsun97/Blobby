@@ -15,11 +15,11 @@ struct CardSection<Content: View>: View {
 }
 
 struct CardRow<Control: View>: View {
-    let label: String
+    let label: LocalizedStringKey
     let showDivider: Bool
     @ViewBuilder let control: () -> Control
 
-    init(_ label: String, showDivider: Bool = true, @ViewBuilder control: @escaping () -> Control) {
+    init(_ label: LocalizedStringKey, showDivider: Bool = true, @ViewBuilder control: @escaping () -> Control) {
         self.label = label
         self.showDivider = showDivider
         self.control = control
@@ -111,13 +111,13 @@ struct SettingsView: View {
 
     private var appearanceCard: some View {
         CardSection {
-            CardRow("Color") {
+            CardRow("settings.color") {
                 ColorPicker("", selection: $settings.blobColor, supportsOpacity: false)
                     .labelsHidden()
                     .onAppear { configureColorPanel() }
                     .onChange(of: settings.blobColor) { _, _ in configureColorPanel() }
             }
-            CardRow("Size") {
+            CardRow("settings.size") {
                 Slider(value: $settings.blobSize, in: 20...100, step: 2)
                     .frame(width: 110)
                 Text("\(Int(settings.blobSize))")
@@ -126,7 +126,7 @@ struct SettingsView: View {
                     .foregroundStyle(.secondary)
                     .frame(width: 40, alignment: .trailing)
             }
-            CardRow("Opacity", showDivider: false) {
+            CardRow("settings.opacity", showDivider: false) {
                 Slider(value: $settings.opacity, in: 0.2...1.0, step: 0.05)
                     .frame(width: 110)
                 Text("\(Int(settings.opacity * 100))%")
@@ -142,7 +142,7 @@ struct SettingsView: View {
 
     private var behaviorCard: some View {
         CardSection {
-            CardRow("Spring") {
+            CardRow("settings.spring") {
                 Picker("", selection: $settings.springMode) {
                     ForEach(SpringMode.allCases) { mode in
                         Text(mode.displayName).tag(mode)
@@ -152,19 +152,19 @@ struct SettingsView: View {
                 .labelsHidden()
                 .frame(width: 156)
             }
-            CardRow("Dot cursor", showDivider: settings.showDotCursor) {
+            CardRow("settings.dotCursor", showDivider: settings.showDotCursor) {
                 Toggle("", isOn: $settings.showDotCursor)
                     .toggleStyle(.switch)
                     .controlSize(.small)
                     .labelsHidden()
             }
             if settings.showDotCursor {
-                CardRow("Dot color") {
+                CardRow("settings.dotColor") {
                     ColorPicker("", selection: $settings.dotColor, supportsOpacity: false)
                         .labelsHidden()
                         .onChange(of: settings.dotColor) { _, _ in configureColorPanel() }
                 }
-                CardRow("Dot size", showDivider: false) {
+                CardRow("settings.dotSize", showDivider: false) {
                     Slider(value: $settings.dotSize, in: 2...16, step: 1)
                         .frame(width: 110)
                     Text("\(Int(settings.dotSize))")

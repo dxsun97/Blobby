@@ -5,10 +5,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     private var overlayWindows: [OverlayWindow] = []
     private var blobViews: [BlobOverlayView] = []
     private let cursorTracker = CursorTracker()
-    let cursorHider = CursorHider()
     private let springRef = SpringRef()
     let settings = BlobbySettings()
-    private var panelCheckTimer: Timer?
     private var settingsWindow: NSPanel?
 
     var menuBarIcon: NSImage {
@@ -23,12 +21,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
             object: nil
         )
 
-        let t = Timer(timeInterval: 0.25, repeats: true) { [weak self] _ in
-            self?.checkPanelState()
-        }
-        RunLoop.main.add(t, forMode: .common)
-        panelCheckTimer = t
-
         if AXIsProcessTrusted() {
             onAccessibilityGranted()
         } else {
@@ -39,7 +31,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
-        panelCheckTimer?.invalidate()
         deactivate()
         cursorTracker.stop()
     }
@@ -53,26 +44,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
                 switch result {
                 case .available(let version, _, let dmgURL):
                     let alert = NSAlert()
-                    alert.messageText = "Update Available"
-                    alert.informativeText = "Blobby v\(version) is available. You're currently on v\(UpdateChecker.currentVersion).\n\nInstall now? The app will restart automatically."
+                    alert.messageText = L10n.text("updates.available.title")
+                    alert.informativeText = L10n.text("updates.available.message", version, UpdateChecker.currentVersion)
                     alert.alertStyle = .informational
-                    alert.addButton(withTitle: "Install Update")
-                    alert.addButton(withTitle: "Later")
+                    alert.addButton(withTitle: L10n.text("updates.install"))
+                    alert.addButton(withTitle: L10n.text("updates.later"))
                     if alert.runModal() == .alertFirstButtonReturn {
                         performUpdate(dmgURL: dmgURL, version: version)
                     }
                 case .upToDate(let version):
                     if !silent {
                         let alert = NSAlert()
-                        alert.messageText = "You're Up to Date"
-                        alert.informativeText = "Blobby v\(version) is the latest version."
+                        alert.messageText = L10n.text("updates.upToDate.title")
+                        alert.informativeText = L10n.text("updates.upToDate.message", version)
                         alert.alertStyle = .informational
                         alert.runModal()
                     }
                 case .error(let message):
                     if !silent {
                         let alert = NSAlert()
-                        alert.messageText = "Update Check Failed"
+                        alert.messageText = L10n.text("updates.checkFailed.title")
                         alert.informativeText = message
                         alert.alertStyle = .warning
                         alert.runModal()
@@ -84,10 +75,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 
     private func performUpdate(dmgURL: URL, version: String) {
         let alert = NSAlert()
-        alert.messageText = "Downloading Update..."
-        alert.informativeText = "Downloading Blobby v\(version)..."
+        alert.messageText = L10n.text("updates.downloading.title")
+        alert.informativeText = L10n.text("updates.downloading.message", version)
         alert.alertStyle = .informational
-        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: L10n.text("common.cancel"))
         let indicator = NSProgressIndicator()
         indicator.style = .bar
         indicator.isIndeterminate = false
@@ -105,7 +96,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
             let result = await UpdateChecker.downloadAndInstall(dmgURL: dmgURL) { progress in
                 DispatchQueue.main.async {
                     indicator.doubleValue = progress
-                    alert.informativeText = "Downloading... \(Int(progress * 100))%"
+                    alert.informativeText = L10n.text("updates.downloading.progress", Int(progress * 100))
                 }
             }
 
@@ -115,16 +106,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
                 switch result {
                 case .success:
                     let done = NSAlert()
-                    done.messageText = "Update Installed"
-                    done.informativeText = "Blobby v\(version) has been installed. The app will restart now."
+                    done.messageText = L10n.text("updates.installed.title")
+                    done.informativeText = L10n.text("updates.installed.message", version)
                     done.alertStyle = .informational
-                    done.addButton(withTitle: "Restart")
+                    done.addButton(withTitle: L10n.text("updates.restart"))
                     done.runModal()
                     deactivate()
                     UpdateChecker.relaunch()
                 case .failure(let error):
                     let fail = NSAlert()
-                    fail.messageText = "Update Failed"
+                    fail.messageText = L10n.text("updates.failed.title")
                     switch error {
                     case .failed(let msg): fail.informativeText = msg
                     }
@@ -227,25 +218,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     // MARK: - Blob Overlay
 
     func activate() {
-        cursorHider.hide()
         blobViews.forEach { $0.startRendering() }
         overlayWindows.forEach { $0.orderFrontRegardless() }
     }
 
     func deactivate() {
-        cursorHider.unhide()
         blobViews.forEach { $0.stopRendering() }
         overlayWindows.forEach { $0.orderOut(nil) }
-    }
-
-    private func checkPanelState() {
-        guard settings.isEnabled else { return }
-        let panelOpen = settingsWindow?.isVisible ?? false
-        if panelOpen {
-            cursorHider.pause()
-        } else {
-            cursorHider.resume()
-        }
     }
 
     private func setupOverlays() {

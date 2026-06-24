@@ -12,6 +12,7 @@ final class OverlayWindow: NSWindow {
         backgroundColor = .clear
         hasShadow = false
         ignoresMouseEvents = true
+        sharingType = .none
         level = .init(Int(CGWindowLevelForKey(.maximumWindow)))
         collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary]
         isReleasedWhenClosed = false

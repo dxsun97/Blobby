@@ -5,8 +5,11 @@
 <h1 align="center">Blobby</h1>
 
 <p align="center">
-  A macOS app that adds an animated, morphing blob cursor overlay.<br>
-  Smooth spring physics. Comet-like kinetic distortion. System-wide.
+  A small macOS menu bar app that draws an animated blob around your cursor.
+</p>
+
+<p align="center">
+  <a href="README.zh-CN.md">简体中文</a>
 </p>
 
 <p align="center">
@@ -17,17 +20,20 @@
 
 ---
 
+Blobby adds a blob overlay that follows the real macOS cursor. It does not hide or replace the native cursor. When the system cursor is hidden by the active app, such as in fullscreen video or text input, the blob hides too.
+
 ## Features
 
-- **Animated blob cursor** — overlays an animated blob that follows your cursor system-wide
-- **Kinetic morphing** — the blob stretches into a comet shape when moving, proportional to speed
-- **Spring physics** — three modes (Normal, Slow, Bouncy) with fluid follow behavior
-- **Click animation** — blob squishes on mouse down
-- **Dot cursor** — optional precise dot at the exact cursor position
-- **Multi-display** — works seamlessly across multiple screens
-- **Menu bar app** — lives in the menu bar, no dock icon
-- **Customizable** — color, size, opacity, spring mode, dot cursor settings
-- **Persistent settings** — your preferences are saved across launches
+- Animated blob overlay following the system cursor
+- Keeps the native cursor visible
+- Hides with the real cursor when apps hide it
+- Spring follow modes: Normal, Slow, Bouncy
+- Speed-based blob stretching
+- Click squish animation
+- Optional dot at the exact cursor position
+- Multi-display support
+- Menu bar settings
+- GitHub Releases update check
 
 ## Install
 
@@ -37,68 +43,104 @@
 brew install --cask --no-quarantine dxsun97/tap/blobby
 ```
 
-> First install auto-taps from the Blobby repo. Future updates: `brew upgrade blobby`
+Update:
 
-### Download
+```bash
+brew upgrade blobby
+```
 
-1. Go to [Releases](../../releases/latest)
-2. Download `Blobby-x.x.x-universal.dmg`
-3. Open the DMG and drag **Blobby** to **Applications**
-4. Launch Blobby — grant Accessibility permission when prompted
+### Manual
 
-> On first launch, macOS may show "unidentified developer" warning. Right-click the app → **Open** → **Open** to bypass.
+1. Download the latest DMG from [Releases](../../releases/latest).
+2. Drag **Blobby.app** to **Applications**.
+3. Open Blobby and grant Accessibility permission.
 
-### Build from source
+If macOS blocks the app on first launch, right-click **Blobby.app** and choose **Open**.
 
-Requires **macOS 14+** and **Xcode Command Line Tools**.
+## Permissions
+
+Blobby needs Accessibility permission to read the global cursor position and mouse button state.
+
+It does not click, type, read windows, or collect data.
+
+Grant permission in:
+
+**System Settings > Privacy & Security > Accessibility**
+
+## Usage
+
+Click the menu bar icon to open settings.
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| Color | Light gray | Blob color |
+| Size | 40 px | Blob diameter |
+| Opacity | 50% | Blob opacity |
+| Spring | Normal | Follow behavior |
+| Dot cursor | Off | Show a precise dot at the cursor position |
+| Dot color | White | Dot color |
+| Dot size | 8 px | Dot diameter |
+
+Settings update immediately and are saved automatically.
+
+## Build
+
+Requirements:
+
+- macOS 14+
+- Xcode Command Line Tools
 
 ```bash
 git clone https://github.com/dxsun97/Blobby.git
 cd Blobby
+bash bundle.sh
+open .build/Blobby.app
+```
+
+Build a DMG:
+
+```bash
 bash create-dmg.sh
 open Blobby-*.dmg
 ```
 
-On first launch, macOS will ask for **Accessibility permission** (needed for global cursor tracking). Grant it in **System Settings > Privacy & Security > Accessibility**.
+## Dev Build
 
-## Usage
+For local testing, it helps to use a separate bundle id so macOS Accessibility permissions do not collide with the installed app:
 
-Click the blob icon in the menu bar to open settings:
+```bash
+BLOBBY_DISPLAY_NAME="Blobby Dev" \
+BLOBBY_BUNDLE_ID="com.blobby.dev" \
+BLOBBY_CODE_SIGN_IDENTITY="Blobby Dev Code Signing" \
+bash bundle.sh
 
-| Setting | Default | Description |
-|---------|---------|-------------|
-| Color | Light gray | Blob fill color |
-| Size | 40px | Blob diameter |
-| Opacity | 50% | Blob transparency |
-| Spring | Normal | Follow behavior (Normal / Slow / Bouncy) |
-| Dot cursor | Off | Show a small dot at the exact cursor position |
-| Dot color | White | Dot fill color |
-| Dot size | 8px | Dot diameter |
+open ".build/Blobby Dev.app"
+```
 
-All settings update in real-time and persist across launches.
-
-## Known limitations
-
-- Requires Accessibility permission for global cursor tracking
-- Cannot hide cursor during secure input (password fields) — blob freezes at last position
-- Not App Store compatible (requires sandbox disabled) — distribute via DMG or Homebrew
-- Overlay may briefly flicker during Space transitions
+`BLOBBY_CODE_SIGN_IDENTITY` is optional. Without it, the app is ad-hoc signed. A stable local signing identity makes Accessibility permission testing less annoying.
 
 ## Release
 
-To create a new release, push a version tag:
+Push a version tag:
 
 ```bash
 git tag v1.0.0
 git push origin v1.0.0
 ```
 
-GitHub Actions will automatically build the DMG and publish it to [Releases](../../releases).
+GitHub Actions builds the DMG, updates the cask, and publishes the release.
+
+## Notes
+
+- Accessibility permission is required.
+- Secure input can limit cursor event visibility.
+- The app is not sandboxed, so it is not suitable for the Mac App Store as-is.
+- Space/fullscreen transitions are controlled by macOS and can occasionally affect overlay timing.
 
 ## Acknowledgments
 
-Inspired by [Blobity](https://github.com/gmrchk/blobity), a web-based custom cursor library by Georgy Marchuk. Blobby is an independent, from-scratch implementation for macOS — no code or assets are derived from Blobity.
+Inspired by [Blobity](https://github.com/gmrchk/blobity). Blobby is a separate macOS implementation and does not use Blobity code or assets.
 
 ## License
 
-MIT
+[MIT](LICENSE)

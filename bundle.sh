@@ -2,7 +2,10 @@
 set -e
 
 APP_NAME="Blobby"
-BUNDLE_DIR=".build/Blobby.app"
+DISPLAY_NAME="${BLOBBY_DISPLAY_NAME:-Blobby}"
+BUNDLE_ID="${BLOBBY_BUNDLE_ID:-com.blobby.app}"
+BUNDLE_DIR="${BLOBBY_BUNDLE_DIR:-.build/${DISPLAY_NAME}.app}"
+CODE_SIGN_IDENTITY="${BLOBBY_CODE_SIGN_IDENTITY:--}"
 CONTENTS_DIR="$BUNDLE_DIR/Contents"
 MACOS_DIR="$CONTENTS_DIR/MacOS"
 RESOURCES_DIR="$CONTENTS_DIR/Resources"
@@ -19,6 +22,14 @@ cp ".build/debug/$APP_NAME" "$MACOS_DIR/$APP_NAME"
 
 # Copy Info.plist
 cp "Blobby/Info.plist" "$CONTENTS_DIR/Info.plist"
+/usr/libexec/PlistBuddy -c "Set :CFBundleName $DISPLAY_NAME" "$CONTENTS_DIR/Info.plist"
+/usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName $DISPLAY_NAME" "$CONTENTS_DIR/Info.plist"
+/usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier $BUNDLE_ID" "$CONTENTS_DIR/Info.plist"
+
+# Copy localized resources
+for dir in Blobby/Resources/*.lproj; do
+    [ -d "$dir" ] && cp -R "$dir" "$RESOURCES_DIR/"
+done
 
 # Generate icns from PNG
 ICON_PNG="Blobby/Resources/Assets.xcassets/AppIcon.appiconset/icon_1024.png"
@@ -46,7 +57,7 @@ fi
 /usr/libexec/PlistBuddy -c "Set :CFBundleIconFile AppIcon" "$CONTENTS_DIR/Info.plist"
 
 # Sign the bundle
-codesign --force --sign - --identifier com.blobby.app --deep "$BUNDLE_DIR" > /dev/null 2>&1
+codesign --force --sign "$CODE_SIGN_IDENTITY" --identifier "$BUNDLE_ID" --deep "$BUNDLE_DIR" > /dev/null 2>&1
 
 echo "✓ Built $BUNDLE_DIR"
 echo "  Run with: open $BUNDLE_DIR"

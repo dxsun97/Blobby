@@ -4,7 +4,9 @@ import QuartzCore
 final class BlobOverlayView: NSView {
     private let blobLayer = CAShapeLayer()
     private let dotLayer = CAShapeLayer()
-    private var timer: Timer?
+    private var displayLink: CVDisplayLink?
+    private var hasPendingDisplayLinkTick = false
+    private let displayLinkLock = NSLock()
     private var layersAdded = false
 
     private let blobShape = BlobShape()
@@ -20,11 +22,19 @@ final class BlobOverlayView: NSView {
     let tracker: CursorTracker
     let settings: BlobbySettings
     let springRef: SpringRef
+    let cursorIsVisible: () -> Bool
 
-    init(tracker: CursorTracker, settings: BlobbySettings, springRef: SpringRef, frame: NSRect) {
+    init(
+        tracker: CursorTracker,
+        settings: BlobbySettings,
+        springRef: SpringRef,
+        frame: NSRect,
+        cursorIsVisible: @escaping () -> Bool = { CursorVisibility.isVisible }
+    ) {
         self.tracker = tracker
         self.settings = settings
         self.springRef = springRef
+        self.cursorIsVisible = cursorIsVisible
         super.init(frame: frame)
         wantsLayer = true
     }
@@ -43,17 +53,50 @@ final class BlobOverlayView: NSView {
     }
 
     func startRendering() {
+        guard displayLink == nil else { return }
+
         lastFrameTime = CACurrentMediaTime()
-        let t = Timer(timeInterval: 1.0 / 60.0, repeats: true) { [weak self] _ in
-            self?.tick()
+        var link: CVDisplayLink?
+        guard CVDisplayLinkCreateWithActiveCGDisplays(&link) == kCVReturnSuccess,
+              let link
+        else {
+            return
         }
-        RunLoop.main.add(t, forMode: .common)
-        timer = t
+
+        let unmanagedSelf = Unmanaged.passUnretained(self).toOpaque()
+        CVDisplayLinkSetOutputCallback(link, { _, _, _, _, _, context in
+            guard let context else { return kCVReturnSuccess }
+            let view = Unmanaged<BlobOverlayView>.fromOpaque(context).takeUnretainedValue()
+
+            view.displayLinkLock.lock()
+            if view.hasPendingDisplayLinkTick {
+                view.displayLinkLock.unlock()
+                return kCVReturnSuccess
+            }
+            view.hasPendingDisplayLinkTick = true
+            view.displayLinkLock.unlock()
+
+            DispatchQueue.main.async {
+                view.tick()
+                view.displayLinkLock.lock()
+                view.hasPendingDisplayLinkTick = false
+                view.displayLinkLock.unlock()
+            }
+            return kCVReturnSuccess
+        }, unmanagedSelf)
+
+        displayLink = link
+        CVDisplayLinkStart(link)
     }
 
     func stopRendering() {
-        timer?.invalidate()
-        timer = nil
+        if let displayLink {
+            CVDisplayLinkStop(displayLink)
+        }
+        displayLink = nil
+        displayLinkLock.lock()
+        hasPendingDisplayLinkTick = false
+        displayLinkLock.unlock()
     }
 
     private func blobCGColor() -> CGColor {
@@ -83,6 +126,12 @@ final class BlobOverlayView: NSView {
         tracker.poll()
         let screenPos = tracker.mousePosition
         guard let windowFrame = window?.frame else { return }
+
+        if !cursorIsVisible() {
+            hideLayers()
+            wasIdle = false
+            return
+        }
 
         springRef.step(constants: settings.springMode.constants, target: screenPos)
 
@@ -132,12 +181,21 @@ final class BlobOverlayView: NSView {
                 dotLayer.isHidden = true
             }
         } else {
-            blobLayer.isHidden = true
-            dotLayer.isHidden = true
+            hideLayers()
         }
 
         CATransaction.commit()
         wasIdle = springRef.isIdle
+    }
+
+    private func hideLayers() {
+        guard !blobLayer.isHidden || !dotLayer.isHidden else { return }
+
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        blobLayer.isHidden = true
+        dotLayer.isHidden = true
+        CATransaction.commit()
     }
 
     deinit {

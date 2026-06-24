@@ -11,6 +11,17 @@ enum UpdateError: Error {
     case failed(String)
 }
 
+private struct GitHubRelease {
+    let tagName: String
+    let htmlURL: URL
+    let dmgURL: URL?
+}
+
+private enum ReleaseLookupResult {
+    case success(GitHubRelease)
+    case failure(String)
+}
+
 struct UpdateChecker {
     static let repoOwner = "dxsun97"
     static let repoName = "Blobby"
@@ -20,50 +31,106 @@ struct UpdateChecker {
     }
 
     static func check() async -> UpdateResult {
-        let urlString = "https://api.github.com/repos/\(repoOwner)/\(repoName)/releases/latest"
-        guard let url = URL(string: urlString) else {
-            return .error("Invalid URL")
+        let apiResult = await latestReleaseFromAPI()
+        let release: GitHubRelease
+
+        switch apiResult {
+        case .success(let apiRelease):
+            release = apiRelease
+        case .failure(let apiMessage):
+            switch await latestReleaseFromRedirect() {
+            case .success(let redirectRelease):
+                release = redirectRelease
+            case .failure(let fallbackMessage):
+                return .error("\(apiMessage)\n\nFallback failed: \(fallbackMessage)")
+            }
+        }
+
+        let latestVersion = release.tagName.hasPrefix("v") ? String(release.tagName.dropFirst()) : release.tagName
+
+        guard isNewer(latestVersion, than: currentVersion) else {
+            return .upToDate(currentVersion: currentVersion)
+        }
+
+        let dmgURL = release.dmgURL
+            ?? URL(string: "https://github.com/\(repoOwner)/\(repoName)/releases/download/\(release.tagName)/Blobby-\(latestVersion)-universal.dmg")!
+
+        return .available(latestVersion: latestVersion, releaseURL: release.htmlURL, dmgURL: dmgURL)
+    }
+
+    private static func latestReleaseFromAPI() async -> ReleaseLookupResult {
+        guard let url = URL(string: "https://api.github.com/repos/\(repoOwner)/\(repoName)/releases/latest") else {
+            return .failure("Invalid URL")
         }
 
         var request = URLRequest(url: url)
+        request.setValue("Blobby/\(currentVersion)", forHTTPHeaderField: "User-Agent")
         request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
+        request.setValue("2022-11-28", forHTTPHeaderField: "X-GitHub-Api-Version")
         request.timeoutInterval = 10
 
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
 
             guard let httpResponse = response as? HTTPURLResponse else {
-                return .error("Invalid response")
+                return .failure("Invalid response")
             }
 
             if httpResponse.statusCode == 404 {
-                return .error("No releases found")
+                return .failure("No releases found")
             }
 
             guard httpResponse.statusCode == 200 else {
-                return .error("GitHub API error (\(httpResponse.statusCode))")
+                return .failure(gitHubAPIErrorMessage(statusCode: httpResponse.statusCode, data: data, response: httpResponse))
             }
 
             guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  let tagName = json["tag_name"] as? String,
-                  let htmlURL = json["html_url"] as? String,
-                  let releaseURL = URL(string: htmlURL)
+                  let release = release(from: json)
             else {
-                return .error("Failed to parse response")
+                return .failure("Failed to parse response")
             }
 
-            let latestVersion = tagName.hasPrefix("v") ? String(tagName.dropFirst()) : tagName
-
-            guard isNewer(latestVersion, than: currentVersion) else {
-                return .upToDate(currentVersion: currentVersion)
-            }
-
-            let dmgURL = findDMGAsset(json: json)
-                ?? URL(string: "https://github.com/\(repoOwner)/\(repoName)/releases/download/\(tagName)/Blobby-\(latestVersion)-universal.dmg")!
-
-            return .available(latestVersion: latestVersion, releaseURL: releaseURL, dmgURL: dmgURL)
+            return .success(release)
         } catch {
-            return .error(error.localizedDescription)
+            return .failure(error.localizedDescription)
+        }
+    }
+
+    private static func latestReleaseFromRedirect() async -> ReleaseLookupResult {
+        guard let url = URL(string: "https://github.com/\(repoOwner)/\(repoName)/releases/latest") else {
+            return .failure("Invalid URL")
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "HEAD"
+        request.setValue("Blobby/\(currentVersion)", forHTTPHeaderField: "User-Agent")
+        request.timeoutInterval = 10
+
+        do {
+            let (_, response) = try await URLSession.shared.data(for: request)
+
+            guard let httpResponse = response as? HTTPURLResponse else {
+                return .failure("Invalid response")
+            }
+
+            guard (200..<400).contains(httpResponse.statusCode) else {
+                return .failure("GitHub releases page error (\(httpResponse.statusCode))")
+            }
+
+            guard let finalURL = httpResponse.url,
+                  let tagName = finalURL.pathComponents.last,
+                  finalURL.pathComponents.contains("tag")
+            else {
+                return .failure("Could not resolve latest release")
+            }
+
+            guard let releaseURL = URL(string: "https://github.com/\(repoOwner)/\(repoName)/releases/tag/\(tagName)") else {
+                return .failure("Invalid release URL")
+            }
+
+            return .success(GitHubRelease(tagName: tagName, htmlURL: releaseURL, dmgURL: nil))
+        } catch {
+            return .failure(error.localizedDescription)
         }
     }
 
@@ -132,6 +199,17 @@ struct UpdateChecker {
         NSApp.terminate(nil)
     }
 
+    private static func release(from json: [String: Any]) -> GitHubRelease? {
+        guard let tagName = json["tag_name"] as? String,
+              let htmlURLString = json["html_url"] as? String,
+              let htmlURL = URL(string: htmlURLString)
+        else {
+            return nil
+        }
+
+        return GitHubRelease(tagName: tagName, htmlURL: htmlURL, dmgURL: findDMGAsset(json: json))
+    }
+
     private static func findDMGAsset(json: [String: Any]) -> URL? {
         guard let assets = json["assets"] as? [[String: Any]] else { return nil }
         for asset in assets {
@@ -143,6 +221,26 @@ struct UpdateChecker {
             }
         }
         return nil
+    }
+
+    private static func gitHubAPIErrorMessage(statusCode: Int, data: Data, response: HTTPURLResponse) -> String {
+        var message = "GitHub API error (\(statusCode))"
+
+        if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+           let apiMessage = json["message"] as? String {
+            message += ": \(apiMessage)"
+        }
+
+        if statusCode == 403,
+           let remaining = response.value(forHTTPHeaderField: "X-RateLimit-Remaining"),
+           remaining == "0",
+           let reset = response.value(forHTTPHeaderField: "X-RateLimit-Reset"),
+           let resetTime = TimeInterval(reset) {
+            let resetDate = Date(timeIntervalSince1970: resetTime)
+            message += "\nGitHub's unauthenticated API rate limit is exhausted. Try again after \(resetDate.formatted(date: .omitted, time: .shortened))."
+        }
+
+        return message
     }
 
     private static func isNewer(_ latest: String, than current: String) -> Bool {

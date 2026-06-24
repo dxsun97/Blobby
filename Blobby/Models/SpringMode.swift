@@ -9,9 +9,9 @@ enum SpringMode: String, CaseIterable, Codable, Identifiable {
 
     var displayName: String {
         switch self {
-        case .normal: "Normal"
-        case .slow: "Slow"
-        case .bouncy: "Bouncy"
+        case .normal: L10n.text("spring.normal")
+        case .slow: L10n.text("spring.slow")
+        case .bouncy: L10n.text("spring.bouncy")
         }
     }
 
